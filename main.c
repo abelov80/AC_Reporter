@@ -32,10 +32,28 @@ float f2_3(float x)
 	return f2(x) - f3(x);
 }
 
+// выделение знака числа
+float signF(float value)
+{
+    return value / fabs(value);
+}
+
+// проверка на наличие корня
+float rootPresent(float (*f)(float), float xl, float xr)
+{
+    if(signF(f(xl)) == signF(f(xr))) //если знак одинаковый, то корней нет
+	    return NAN;
+    return 1;
+}
 
 // Метод нахождения корня "Линейный поиск"
 float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 {
+    if(rootPresent(f, xl, xr) != 1)
+    {
+        printf("No root find\n");
+	    return NAN;
+    }
 	float x, minx = xl,	nextstep;
 	nextstep = fabs(xr - xl) / (1 / eps); //разбиваем на отрезки интервал
 	int stepcount = 0;
@@ -44,26 +62,18 @@ float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 		if(fabs(f(x)) < fabs(f(minx)))
 			minx = x;
 	}
-	float result = f(minx);
-    result = floor(fabs(result));
-	if(result == 0)
-	{
-		printf("Find root for %d steps\n", stepcount); //статистика
-		return minx;
-	}
-	printf("No root find\n");
-	return NAN;
-}
-
-// выделение знака числа
-float signF(float value)
-{
-    return value / fabs(value);
+	printf("Find root for %d steps\n", stepcount); //статистика
+	return minx;	
 }
 
 // Метод нахождения корня "Деление отрезка пополам"
 float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
 {
+    if(rootPresent(f, xl, xr) != 1)
+    {
+        printf("No root find\n");
+	    return NAN;
+    }
 	int stepcount = 0; //число шагов
 	float xm;
 	while(fabs(xr-xl) > eps)
@@ -85,17 +95,17 @@ float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
 		else
 			xl = xm;
 	}
-    if(signF(f(xl)) != signF(f(xm))) //если знак отличается
-    {
-        printf("Find root for %d steps\n", stepcount); //статистика
-	    return (xl + xr) / 2;
-    }
-    printf("No root find\n");
-	return NAN;	
+    printf("Find root for %d steps\n", stepcount); //статистика
+	return (xl + xr) / 2;
 }
 
 // Метод нахождения корня "Хорды"
 float rootFindChord(float (*f)(float), float xl, float xr, float eps) {
+    if(rootPresent(f, xl, xr) != 1)
+    {
+        printf("No root find\n");
+	    return NAN;
+    }
 	int stepcount = 0;
 	while(fabs(xr - xl) > eps)
 	{
@@ -103,7 +113,7 @@ float rootFindChord(float (*f)(float), float xl, float xr, float eps) {
 		xr = xl - (xl - xr) * f(xl) / (f(xl) - f(xr));
 		stepcount++;
 	}
-	printf("\nFind root for %d steps\n", stepcount);
+	printf("Find root for %d steps\n", stepcount);
 	return xr;
 }
 
@@ -223,5 +233,6 @@ int main() {
     printf("The area of the figure is %lf\n", s);*/
     printf("Linear search root: %f\n", rootFindLineSearch(f1_2, 1, 3, 1e-3));
 	printf("Div2 root: %f\n", rootFindDiv2(f1_2, 1, 3, 1e-3));
+    printf("Div2 root: %f\n", rootFindChord(f1_2, 1, 3, 1e-3));
     return 0;
 }
