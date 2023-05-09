@@ -45,7 +45,8 @@ float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 			minx = x;
 	}
 	float result = f(minx);
-	if(result >= -eps * 2 && result <= eps * 2)
+    result = floor(fabs(result));
+	if(result == 0)
 	{
 		printf("Find root for %d steps\n", stepcount); //статистика
 		return minx;
@@ -54,11 +55,16 @@ float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 	return NAN;
 }
 
+// выделение знака числа
+float signF(float value)
+{
+    return value / fabs(value);
+}
+
 // Метод нахождения корня "Деление отрезка пополам"
-/*
 float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
 {
-	int stepcount=0; //число шагов
+	int stepcount = 0; //число шагов
 	float xm;
 	while(fabs(xr-xl) > eps)
 	{ //вещественный модуль разницы
@@ -74,14 +80,15 @@ float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
 			printf("Find root for %d steps\n", stepcount);
 			return xl;
 		}
-		if(signF(xl) != signF(xm)) //если знак отличается
+		if(signF(f(xl)) != signF(f(xm))) //если знак отличается
 			xr = xm;
 		else
 			xl = xm;
 	}
+    
 	printf("Find root for %d steps\n", stepcount); //статистика
 	return (xl + xr) / 2;
-}*/
+}
 
 // Метод нахождения корня "Хорды"
 float rootFindChord(float (*f)(float), float xl, float xr, float eps) {
@@ -210,6 +217,7 @@ int main() {
     /*double a = -7, b = 4, eps = 1e-3;
     double s = area(f1, f2, f3, a, b, eps, eps);
     printf("The area of the figure is %lf\n", s);*/
-	printf("%f\n", rootFindLineSearch(f1_2, 1, 4.2, 1e-3));
+    printf("Linear search root: %f\n", rootFindLineSearch(f1_2, 1, 5, 1e-3));
+	printf("Div2 root: %f\n", rootFindDiv2(f1_2, 1, 5, 1e-3));
     return 0;
 }
