@@ -85,9 +85,13 @@ float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
 		else
 			xl = xm;
 	}
-    
-	printf("Find root for %d steps\n", stepcount); //статистика
-	return (xl + xr) / 2;
+    if(signF(f(xl)) != signF(f(xm))) //если знак отличается
+    {
+        printf("Find root for %d steps\n", stepcount); //статистика
+	    return (xl + xr) / 2;
+    }
+    printf("No root find\n");
+	return NAN;	
 }
 
 // Метод нахождения корня "Хорды"
@@ -217,7 +221,7 @@ int main() {
     /*double a = -7, b = 4, eps = 1e-3;
     double s = area(f1, f2, f3, a, b, eps, eps);
     printf("The area of the figure is %lf\n", s);*/
-    printf("Linear search root: %f\n", rootFindLineSearch(f1_2, 1, 5, 1e-3));
-	printf("Div2 root: %f\n", rootFindDiv2(f1_2, 1, 5, 1e-3));
+    printf("Linear search root: %f\n", rootFindLineSearch(f1_2, 1, 3, 1e-3));
+	printf("Div2 root: %f\n", rootFindDiv2(f1_2, 1, 3, 1e-3));
     return 0;
 }
