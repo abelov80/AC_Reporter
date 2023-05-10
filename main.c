@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <my_func.h>
+#include "my_func.h"
+
+unsigned char flagShowStep = 0; // флаг отображения кол-ва шагов при нахождении корней
+unsigned char flagShowRootPoint = 0; // флаг отображения точек пересечения функций
+unsigned char flagShowDebug = 0; // флаг вывода сообщений отладки
 
 int main(int argc, char **argv)
 {
@@ -9,11 +13,10 @@ int main(int argc, char **argv)
     if(argc == 1)
     {
         printf("-h for help.\n");
-        return 0;
     }
     do
     {
-        option = getopt(argc,argv,"hpgf:m:y:");
+        option = getopt(argc,argv,"hopt");
         if(option == -1)
             break;
         
@@ -27,10 +30,10 @@ int main(int argc, char **argv)
                 return 0;
                 break;
             case 'o':
-                
+                flagShowRootPoint = 1;
                 break;
             case 'p':
-                
+                flagShowStep = 1;
                 break;
             case 't':
                 

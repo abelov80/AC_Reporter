@@ -1,5 +1,5 @@
-#ifndef __BMP_H
-#define __BMP_H
+#ifndef __MY_FUNC_H
+#define __MY_FUNC_H
 
 #ifdef __cplusplus
 extern "C"

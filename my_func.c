@@ -1,4 +1,8 @@
-#include <my_func.h>
+#include "my_func.h"
+
+extern unsigned char flagShowStep;
+extern unsigned char flagShowRootPoint;
+extern unsigned char flagShowDebug;
 
 float f1(float x)
 {
@@ -71,7 +75,8 @@ float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 {
     if(rootPresent(f, xl, xr) != 1)
     {
-        printf("No root find\n");
+		if(flagShowDebug)
+        	printf("No root find\n");
 	    return NAN;
     }
 	float x, minx = xl,	nextstep;
@@ -82,7 +87,8 @@ float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 		if(fabs(f(x)) < fabs(f(minx)))
 			minx = x;
 	}
-	printf("Find root for %d steps\n", stepcount); //статистика
+	if(flagShowStep)
+		printf("Find root for %d steps\n", stepcount); //статистика
 	return minx;	
 }
 
@@ -90,7 +96,8 @@ float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
 {
     if(rootPresent(f, xl, xr) != 1)
     {
-        printf("No root find\n");
+		if(flagShowDebug)
+        	printf("No root find\n");
 	    return NAN;
     }
 	int stepcount = 0; //число шагов
@@ -101,12 +108,14 @@ float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
 		xm = (xl + xr) / 2; // середина отрезка
 		if(f(xr) == 0)
 		{ // нашли решение на правой границе
-			printf("Find root for %d steps\n", stepcount);
+			if(flagShowStep)
+				printf("Find root for %d steps\n", stepcount);
 			return xr;
 		}
 		if(f(xl) == 0)
 		{ // нашли решение на левой границе
-			printf("Find root for %d steps\n", stepcount);
+			if(flagShowStep)
+				printf("Find root for %d steps\n", stepcount);
 			return xl;
 		}
 		if(f(xl) * f(xm) < 0) //если знак отличается
@@ -114,7 +123,8 @@ float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
 		else
 			xl = xm;
 	}
-    printf("Find root for %d steps\n", stepcount); //статистика
+	if(flagShowStep)
+    	printf("Find root for %d steps\n", stepcount); //статистика
 	return (xl + xr) / 2;
 }
 
@@ -122,7 +132,8 @@ float rootFindChord(float (*f)(float), float xl, float xr, float eps)
 {
     if(rootPresent(f, xl, xr) != 1)
     {
-        printf("No root find\n");
+		if(flagShowDebug)
+        	printf("No root find\n");
 	    return NAN;
     }
 	int stepcount = 0;
@@ -132,6 +143,7 @@ float rootFindChord(float (*f)(float), float xl, float xr, float eps)
 		xr = xl - (xl - xr) * f(xl) / (f(xl) - f(xr));
 		stepcount++;
 	}
-	printf("Find root for %d steps\n", stepcount);
+	if(flagShowStep)
+		printf("Find root for %d steps\n", stepcount);
 	return xr;
 }
