@@ -84,6 +84,8 @@ float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 	int stepcount = 0;
 	for(x = xl; x < xr; x += nextstep, stepcount++)
 	{
+		float r1 = fabs(f(x));
+		float r2 = fabs(f(minx));
 		if(fabs(f(x)) < fabs(f(minx)))
 			minx = x;
 	}
@@ -146,4 +148,22 @@ float rootFindChord(float (*f)(float), float xl, float xr, float eps)
 	if(flagShowStep)
 		printf("Find root for %d steps\n", stepcount);
 	return xr;
+}
+
+void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps)
+{
+	do
+	{
+		float result = fM(f, xl, xr, eps);
+		if(result == NAN)
+		{
+			xl =+ eps;
+		} else
+		{
+			printf("Find root = %f\n", result);
+			xl = result + eps;
+		}		
+		if(xl >= xr)
+			break;
+	} while ((xr - xl) < eps);	
 }

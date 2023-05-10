@@ -133,6 +133,16 @@ float rootFindDiv2(float (*f)(float), float xl, float xr, float eps);
  * @return float Возвращает значение корня, либо NAN если его нет
  */
 float rootFindChord(float (*f)(float), float xl, float xr, float eps);
+/**
+ * @brief Поиск и вывод на экран всех корней на заданном интервале
+ * 
+ * @param f Указатель на функцию
+ * @param fM Указатель на функцию метода поиска
+ * @param xl левая граница интервала
+ * @param xr правая граница интервала
+ * @param eps точность
+ */
+void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps);
 
 
 #ifdef __cplusplus
