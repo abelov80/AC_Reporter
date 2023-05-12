@@ -73,7 +73,7 @@ float rootPresent(float (*f)(float), float xl, float xr)
 
 float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 {
-    if(rootPresent(f, xl, xr) != 1)
+    if(isnan(rootPresent(f, xl, xr)))
     {
 		if(flagShowDebug)
         	printf("No root find\n");
@@ -84,8 +84,6 @@ float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
 	int stepcount = 0;
 	for(x = xl; x < xr; x += nextstep, stepcount++)
 	{
-		float r1 = fabs(f(x));
-		float r2 = fabs(f(minx));
 		if(fabs(f(x)) < fabs(f(minx)))
 			minx = x;
 	}
@@ -152,18 +150,18 @@ float rootFindChord(float (*f)(float), float xl, float xr, float eps)
 
 void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps)
 {
+	float step = eps * 100;
+	float xxr = xl + step;
 	do
 	{
-		float result = fM(f, xl, xr, eps);
-		if(result == NAN)
-		{
-			xl =+ eps;
-		} else
-		{
+		float result = fM(f, xl, xxr, eps);
+		if(!isnan(result)) // not equal NAN
 			printf("Find root = %f\n", result);
-			xl = result + eps;
-		}		
-		if(xl >= xr)
-			break;
-	} while ((xr - xl) < eps);	
+		xl = xxr;
+		xxr += step;
+		if(xl < 0 && (-xl) < eps)
+			xl = 0;
+		if(xxr > 0 && xxr < eps)
+			xxr = 0;
+	} while (xxr < xr);	
 }

@@ -4,7 +4,7 @@
 
 unsigned char flagShowStep = 1; // флаг отображения кол-ва шагов при нахождении корней
 unsigned char flagShowRootPoint = 1; // флаг отображения точек пересечения функций
-unsigned char flagShowDebug = 1; // флаг вывода сообщений отладки
+unsigned char flagShowDebug = 0; // флаг вывода сообщений отладки
 
 int main(int argc, char **argv)
 {
