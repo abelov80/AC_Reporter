@@ -148,7 +148,7 @@ float rootFindChord(float (*f)(float), float xl, float xr, float eps)
 	return xr;
 }
 
-void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps)
+void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps, float *minx, float *maxx)
 {
 	float step = eps * 100;
 	float xxr = xl + step;
@@ -156,7 +156,11 @@ void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float,
 	{
 		float result = fM(f, xl, xxr, eps);
 		if(!isnan(result)) // not equal NAN
+		{
 			printf("Find root = %f\n", result);
+			if(result < *minx) *minx = result;
+			if(result > *maxx) *maxx = result;
+		}
 		xl = xxr;
 		xxr += step;
 		if(xl < 0 && (-xl) < eps)
@@ -164,4 +168,88 @@ void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float,
 		if(xxr > 0 && xxr < eps)
 			xxr = 0;
 	} while (xxr < xr);	
+}
+
+float nearestAbove(float y, float y1, float y2, float y3)
+{
+	if(y1 > y && (y1 < y2 || y2 < y) && (y1 < y3 || y3 < y)) return y1;
+	if(y2 > y && (y2 < y1 || y1 < y) && (y2 < y3 || y3 < y)) return y2;
+	if(y3 > y && (y3 < y1 || y1 < y) && (y3 < y2 || y2 < y)) return y3;
+	return y;	
+}
+
+float nearestBelow(float y, float y1, float y2, float y3)
+{
+	if(y1 < y && (y1 > y2 || y2 > y) && (y1 > y3 || y3 > y)) return y1;
+	if(y2 < y && (y2 > y1 || y1 > y) && (y2 > y3 || y3 > y)) return y2;
+	if(y3 < y && (y3 > y1 || y1 > y) && (y3 > y2 || y2 > y)) return y3;
+	return y;	
+}
+
+float calcIntegralSquare(float (*f_1)(float), float (*f_2)(float), float (*f_3)(float), float xl, float xr, float eps, float sX, float sY)
+{
+	float sum = 0, x, y;
+	x = sX;
+	y = sY;
+	while(x > xl)
+	{
+		float res_1 = f_1(x);
+		float res_2 = f_2(x);
+		float res_3 = f_3(x);
+		if(isnan(res_1)) res_1 = 999;
+		if(isnan(res_2)) res_2 = 999;
+		if(isnan(res_3)) res_3 = 999;
+		float na = nearestAbove(y, res_1, res_2, res_3);
+		float nb = nearestBelow(y, res_1, res_2, res_3);
+		if(na - nb <= eps * 3) break;		
+		if(y == na)
+		{
+			if(fabs(res_1 - y) < eps) na = res_1;
+			if(fabs(res_2 - y) < eps) na = res_2;
+			if(fabs(res_3 - y) < eps) na = res_3;
+		}
+		if(y == nb)
+		{
+			if(fabs(y - res_1) < eps) nb = res_1;
+			if(fabs(y - res_2) < eps) nb = res_2;
+			if(fabs(y - res_3) < eps) nb = res_3;
+		}		
+		if(y == na || y == nb)
+			return -1;
+		sum += (fabs(na) + fabs(nb)) * eps;
+		y = na - (na - nb) / 2;
+		x -= eps;
+	}
+	x = sX + eps;
+	y = sY;
+	while(x < xr)
+	{
+		float res_1 = f_1(x);
+		float res_2 = f_2(x);
+		float res_3 = f_3(x);
+		if(isnan(res_1)) res_1 = 999;
+		if(isnan(res_2)) res_2 = 999;
+		if(isnan(res_3)) res_3 = 999;
+		float na = nearestAbove(y, res_1, res_2, res_3);
+		float nb = nearestBelow(y, res_1, res_2, res_3);
+		if(na - nb <= eps * 3) break;
+		if(y == na)
+		{
+			if(fabs(res_1 - y) < eps) na = res_1;
+			if(fabs(res_2 - y) < eps) na = res_2;
+			if(fabs(res_3 - y) < eps) na = res_3;
+		}
+		if(y == nb)
+		{
+			if(fabs(y - res_1) < eps) nb = res_1;
+			if(fabs(y - res_2) < eps) nb = res_2;
+			if(fabs(y - res_3) < eps) nb = res_3;
+		}
+		if(y == na || y == nb)
+			return -1;
+		sum += (fabs(na) + fabs(nb)) * eps;
+		y = na - (na - nb) / 2;
+		x += eps;
+	}
+	return sum;
 }

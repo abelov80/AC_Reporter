@@ -141,8 +141,41 @@ float rootFindChord(float (*f)(float), float xl, float xr, float eps);
  * @param xl левая граница интервала
  * @param xr правая граница интервала
  * @param eps точность
+ * @param minx указатель на минимальный найденный корень
+ * @param maxx указатель на максимальный найденный корень
  */
-void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps);
+void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps, float *minx, float *maxx);
+/**
+ * @brief Поиск ближайшей большей точки к y 
+ * @param y Заданная точка y
+ * @param y1 
+ * @param y2 
+ * @param y3 
+ * @return float Результат поиска
+ */
+float nearestAbove(float y, float y1, float y2, float y3);
+/**
+ * @brief Поиск ближайшей меньшей точки к y 
+ * @param y Заданная точка y
+ * @param y1 
+ * @param y2 
+ * @param y3 
+ * @return float Результат поиска
+ */
+float nearestBelow(float y, float y1, float y2, float y3);
+/**
+ * @brief Поиск площади фигуры ограниченной тремя функциями
+ * @param f_1 указатель на 1 функцию
+ * @param f_2 указатель на 2 функцию
+ * @param f_3 указатель на 3 функцию
+ * @param xl левая граница поиска
+ * @param xr правая граница поиска
+ * @param eps шаг интегрирования
+ * @param sX точка по оси Х внутри площади искомой фигуры
+ * @param sY точка по оси Y внутри площади искомой фигуры
+ * @return float Результат рассчета площади
+ */
+float calcIntegralSquare(float (*f_1)(float), float (*f_2)(float), float (*f_3)(float), float xl, float xr, float eps, float sX, float sY);
 
 
 #ifdef __cplusplus
