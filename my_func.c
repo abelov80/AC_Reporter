@@ -64,100 +64,78 @@ float df2_3(float x)
     return df2(x) - df3(x);
 }
 
-float rootPresent(float (*f)(float), float xl, float xr)
+unsigned char rootPresent(float (*f)(float), float xl, float xr)
 {
     if(f(xl) * f(xr) >= 0) // если знак одинаковый, то корней нет
-	    return NAN;
+	    return 0;
     return 1;
 }
 
-float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps)
-{
-    if(isnan(rootPresent(f, xl, xr)))
-    {
-		if(flagShowDebug)
-        	printf("No root find\n");
-	    return NAN;
-    }
-	float x, minx = xl,	nextstep;
-	nextstep = fabs(xr - xl) / (1 / eps); //разбиваем на отрезки интервал
-	int stepcount = 0;
-	for(x = xl; x < xr; x += nextstep, stepcount++)
+float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps, unsigned int *step)
+{   
+	if(!rootPresent(f, xl, xr))
+	    return NAN; 
+	while(xl < xr)
 	{
-		if(fabs(f(x)) < fabs(f(minx)))
-			minx = x;
+		if(rootPresent(f, xl, xl + eps))
+			return xl + eps/ 2;
+		*step += 1;
+		xl += eps;
 	}
-	if(flagShowStep)
-		printf("Find root for %d steps\n", stepcount); //статистика
-	return minx;	
+	return NAN;	
 }
 
-float rootFindDiv2(float (*f)(float), float xl, float xr, float eps)
+float rootFindDiv2(float (*f)(float), float xl, float xr, float eps, unsigned int *step)
 {
-    if(rootPresent(f, xl, xr) != 1)
-    {
-		if(flagShowDebug)
-        	printf("No root find\n");
+    if(!rootPresent(f, xl, xr))
 	    return NAN;
-    }
-	int stepcount = 0; //число шагов
 	float xm;
 	while(fabs(xr-xl) > eps)
-	{ //вещественный модуль разницы
-		stepcount++;
+	{ 
+		*step += 1;
 		xm = (xl + xr) / 2; // середина отрезка
-		if(f(xr) == 0)
-		{ // нашли решение на правой границе
-			if(flagShowStep)
-				printf("Find root for %d steps\n", stepcount);
-			return xr;
-		}
-		if(f(xl) == 0)
-		{ // нашли решение на левой границе
-			if(flagShowStep)
-				printf("Find root for %d steps\n", stepcount);
-			return xl;
-		}
-		if(f(xl) * f(xm) < 0) //если знак отличается
+		if(rootPresent(f, xl, xm))
 			xr = xm;
 		else
 			xl = xm;
 	}
-	if(flagShowStep)
-    	printf("Find root for %d steps\n", stepcount); //статистика
 	return (xl + xr) / 2;
 }
 
-float rootFindChord(float (*f)(float), float xl, float xr, float eps)
+float rootFindChord(float (*f)(float), float xl, float xr, float eps, unsigned int *step)
 {
-    if(rootPresent(f, xl, xr) != 1)
-    {
-		if(flagShowDebug)
-        	printf("No root find\n");
+    if(!rootPresent(f, xl, xr))
 	    return NAN;
-    }
-	int stepcount = 0;
 	while(fabs(xr - xl) > eps)
 	{
 		xl = xr - (xr - xl) * f(xr) / (f(xr) - f(xl));
 		xr = xl - (xl - xr) * f(xl) / (f(xl) - f(xr));
-		stepcount++;
+		*step += 1;
 	}
-	if(flagShowStep)
-		printf("Find root for %d steps\n", stepcount);
 	return xr;
 }
 
-void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps, float *minx, float *maxx)
+void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float, unsigned int *), float xl, float xr, float eps, float *minx, float *maxx)
 {
+	if(flagShowRootPoint)
+	{
+		if(fM == rootFindLineSearch) printf("Linear method search root:\n");
+		if(fM == rootFindDiv2) printf("Div2 method search root:\n");
+		if(fM == rootFindChord) printf("Chord method search root:\n");
+	}
+	unsigned int stepcount = 0;
+	unsigned char findRoot = 0;
 	float step = eps * 100;
 	float xxr = xl + step;
 	do
 	{
-		float result = fM(f, xl, xxr, eps);
+		float result = fM(f, xl, xxr, eps, &stepcount);
 		if(!isnan(result)) // not equal NAN
-		{
-			printf("Find root = %f\n", result);
+		{		
+			findRoot = 1;	
+			if(flagShowRootPoint) printf("Find root = %f\n", result);
+			if(flagShowStep)
+				printf("Step to find root - %u\n", stepcount);
 			if(result < *minx) *minx = result;
 			if(result > *maxx) *maxx = result;
 		}
@@ -167,88 +145,236 @@ void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float,
 			xl = 0;
 		if(xxr > 0 && xxr < eps)
 			xxr = 0;
-	} while (xxr < xr);	
+	} while (xxr < xr);
+	if(!findRoot && flagShowRootPoint)
+		printf("Root not find.");
 }
 
-float nearestAbove(float y, float y1, float y2, float y3)
+float getBetween(float y, float y1, float y2, float y3, float *na, float *nb)
 {
-	if(y1 > y && (y1 < y2 || y2 < y) && (y1 < y3 || y3 < y)) return y1;
-	if(y2 > y && (y2 < y1 || y1 < y) && (y2 < y3 || y3 < y)) return y2;
-	if(y3 > y && (y3 < y1 || y1 < y) && (y3 < y2 || y2 < y)) return y3;
-	return y;	
+	if(isnan(y1)) y1 = 999;
+	if(isnan(y2)) y2 = 999;
+	if(isnan(y3)) y3 = 999;
+	if(y == y1 || y == y2 || y == y3) return 0;
+	if(y > y1) { 
+		if(y > y2) {
+			if(y > y3) return 0;				
+			else {
+				if(y1 > y2) {
+					*na = y3, *nb = y1;
+					return y3 - y1;
+				} 
+				else {
+					*na = y3, *nb = y2;
+					return y3 - y2;
+				}
+			}
+		} else {
+			if(y < y3) {
+				if(y3 < y2)	{
+					*na = y3, *nb = y1;
+					return y3 - y1;
+				}
+				else {
+					*na = y2, *nb = y1;
+					return y2 - y1;
+				}
+			} else {
+				if(y1 > y3) {
+					*na = y2, *nb = y1;
+					return y2 - y1;
+				}
+				else {
+					*na = y2, *nb = y3;
+					return y2 - y3;
+				}
+			}
+		}
+	} else {
+		if(y < y2) {
+			if(y < y3) return 0;
+			else {
+				if(y1 > y2) {
+					*na = y2, *nb = y3;
+					return y2 - y3;
+				}
+				else {
+					*na = y1, *nb = y3;
+					return y1 - y3;
+				}
+			}
+		} else {
+			if(y > y3) {
+				if(y2 > y3) {
+					*na = y1, *nb = y2;
+					return y1 - y2;
+				}
+				else {
+					*na = y1, *nb = y3;
+					return y1 - y3;
+				}
+			} else {
+				if(y1 > y3) {
+					*na = y3, *nb = y2;
+					return y3 - y2;
+				}
+				else {
+					*na = y1, *nb = y2;
+					return y1 - y2;
+				}
+			}			
+		}
+	}
+}
+// Считает кол-во нулей перед значимой частью
+unsigned char getNumZero(float value)
+{
+	unsigned char result = 0;
+	while(value + 0.1 < 1)
+	{
+		result++;
+		value *= 10;
+	}
+	return result;
 }
 
-float nearestBelow(float y, float y1, float y2, float y3)
+float calcIntegralSquare(float xl, float xr, float eps, float sX, float sY)
 {
-	if(y1 < y && (y1 > y2 || y2 > y) && (y1 > y3 || y3 > y)) return y1;
-	if(y2 < y && (y2 > y1 || y1 > y) && (y2 > y3 || y3 > y)) return y2;
-	if(y3 < y && (y3 > y1 || y1 > y) && (y3 > y2 || y2 > y)) return y3;
-	return y;	
-}
-
-float calcIntegralSquare(float (*f_1)(float), float (*f_2)(float), float (*f_3)(float), float xl, float xr, float eps, float sX, float sY)
-{
-	float sum = 0, x, y;
-	x = sX;
-	y = sY;
+	float sum = 0; // площадь
+	float x, y, na, nb, py, ty, res;
+	unsigned char ordEps = getNumZero(eps);
+	/* Идем от указанной точки влево. Проверяем значение функций в искомой точке, если положение указанной точки
+	*  по оси Y оказывается за пределами диапазона функций, то существует разрыв, выходим. Если она оказывается
+	*  между найденными значениями, то ищем ближайшие к указанной точке и считаем расстояние до них.
+	*/
+	y = sY, py = sY, x = sX;
+	if(x < xl) return -1;
 	while(x > xl)
 	{
-		float res_1 = f_1(x);
-		float res_2 = f_2(x);
-		float res_3 = f_3(x);
-		if(isnan(res_1)) res_1 = 999;
-		if(isnan(res_2)) res_2 = 999;
-		if(isnan(res_3)) res_3 = 999;
-		float na = nearestAbove(y, res_1, res_2, res_3);
-		float nb = nearestBelow(y, res_1, res_2, res_3);
-		if(na - nb <= eps * 3) break;		
-		if(y == na)
-		{
-			if(fabs(res_1 - y) < eps) na = res_1;
-			if(fabs(res_2 - y) < eps) na = res_2;
-			if(fabs(res_3 - y) < eps) na = res_3;
-		}
-		if(y == nb)
-		{
-			if(fabs(y - res_1) < eps) nb = res_1;
-			if(fabs(y - res_2) < eps) nb = res_2;
-			if(fabs(y - res_3) < eps) nb = res_3;
-		}		
+		res = getBetween(y, f1(x), f2(x), f3(x), &na, &nb);
+		if(res == 0)
+			return -1;		
+		if(na - nb <= eps * 3 * ordEps)
+			break;		
 		if(y == na || y == nb)
 			return -1;
-		sum += (fabs(na) + fabs(nb)) * eps;
-		y = na - (na - nb) / 2;
+		sum += res * eps;
+		ty = py;
+		py = y;
+		y = ty + ((na + nb) / 2 - ty) * 1.3;
 		x -= eps;
 	}
-	x = sX + eps;
-	y = sY;
+	y = sY, py = sY, x = sX;
+	if(x > xr) return -1;
 	while(x < xr)
-	{
-		float res_1 = f_1(x);
-		float res_2 = f_2(x);
-		float res_3 = f_3(x);
-		if(isnan(res_1)) res_1 = 999;
-		if(isnan(res_2)) res_2 = 999;
-		if(isnan(res_3)) res_3 = 999;
-		float na = nearestAbove(y, res_1, res_2, res_3);
-		float nb = nearestBelow(y, res_1, res_2, res_3);
-		if(na - nb <= eps * 3) break;
-		if(y == na)
-		{
-			if(fabs(res_1 - y) < eps) na = res_1;
-			if(fabs(res_2 - y) < eps) na = res_2;
-			if(fabs(res_3 - y) < eps) na = res_3;
-		}
-		if(y == nb)
-		{
-			if(fabs(y - res_1) < eps) nb = res_1;
-			if(fabs(y - res_2) < eps) nb = res_2;
-			if(fabs(y - res_3) < eps) nb = res_3;
-		}
+	{		
+		res = getBetween(y, f1(x), f2(x), f3(x), &na, &nb);
+		if(res == 0)
+			return -1;		
+		if(na - nb <= eps * 3 * ordEps)
+			break;		
 		if(y == na || y == nb)
 			return -1;
-		sum += (fabs(na) + fabs(nb)) * eps;
-		y = na - (na - nb) / 2;
+		sum += res * eps;
+		ty = py;
+		py = y;
+		y = ty + ((na + nb) / 2 - ty) * 1.3;
+		x += eps;
+	}
+	return sum;
+}
+
+float calcIntegralTrap(float xl, float xr, float eps, float sX, float sY)
+{
+	float sum = 0; // площадь
+	float x, y, na, nb, py, ty, res;
+	unsigned char ordEps = getNumZero(eps);
+	/* Идем от указанной точки влево. Проверяем значение функций в искомой точке, если положение указанной точки
+	*  по оси Y оказывается за пределами диапазона функций, то существует разрыв, выходим. Если она оказывается
+	*  между найденными значениями, то ищем ближайшие к указанной точке и считаем расстояние до них.
+	*/
+	y = sY, py = sY, x = sX - eps;
+	if(x < xl) return -1;
+	while(x > xl)
+	{
+		res = getBetween(y, f1(x), f2(x), f3(x), &na, &nb);
+		if(res == 0)
+			return -1;		
+		if(na - nb <= eps * 3 * ordEps)
+			break;		
+		if(y == na || y == nb)
+			return -1;
+		sum += eps * 0.5 * (res + getBetween(y, f1(x + eps), f2(x + eps), f3(x + eps), &na, &nb));
+		ty = py;
+		py = y;
+		y = ty + ((na + nb) / 2 - ty) * 1.3;
+		x -= eps;
+	}
+	y = sY, py = sY, x = sX + eps;
+	if(x > xr) return -1;
+	while(x < xr)
+	{		
+		res = getBetween(y, f1(x), f2(x), f3(x), &na, &nb);
+		if(res == 0)
+			return -1;		
+		if(na - nb <= eps * 3 * ordEps)
+			break;		
+		if(y == na || y == nb)
+			return -1;
+		sum += eps * 0.5 * (res + getBetween(y, f1(x - eps), f2(x - eps), f3(x - eps), &na, &nb));
+		ty = py;
+		py = y;
+		y = ty + ((na + nb) / 2 - ty) * 1.3;
+		x += eps;
+	}
+	return sum;
+}
+
+float calcIntegralSimpson(float xl, float xr, float eps, float sX, float sY)
+{
+	float sum = 0; // площадь
+	float x, y, na, nb, py, ty, res, pres, res_05;
+	unsigned char ordEps = getNumZero(eps);
+	/* Идем от указанной точки влево. Проверяем значение функций в искомой точке, если положение указанной точки
+	*  по оси Y оказывается за пределами диапазона функций, то существует разрыв, выходим. Если она оказывается
+	*  между найденными значениями, то ищем ближайшие к указанной точке и считаем расстояние до них.
+	*/
+	y = sY, py = sY, x = sX - eps;
+	if(x < xl) return -1;
+	while(x > xl)
+	{
+		res = getBetween(y, f1(x), f2(x), f3(x), &na, &nb);
+		pres = getBetween(y, f1(x + eps), f2(x + eps), f3(x + eps), &na, &nb);
+		res_05 = getBetween(y, f1(x + eps / 2), f2(x + eps / 2), f3(x + eps / 2), &na, &nb);
+		if(res == 0)
+			return -1;		
+		if(na - nb <= eps * 3 * ordEps)
+			break;		
+		if(y == na || y == nb)
+			return -1;
+		sum += eps / 6.0 * (res + 4.0 * res_05 + pres);
+		ty = py;
+		py = y;
+		y = ty + ((na + nb) / 2 - ty) * 1.3;
+		x -= eps;
+	}
+	y = sY, py = sY, x = sX + eps;
+	if(x > xr) return -1;
+	while(x < xr)
+	{		
+		res = getBetween(y, f1(x), f2(x), f3(x), &na, &nb);
+		pres = getBetween(y, f1(x + eps), f2(x + eps), f3(x + eps), &na, &nb);
+		res_05 = getBetween(y, f1(x + eps / 2), f2(x + eps / 2), f3(x + eps / 2), &na, &nb);
+		if(res == 0)
+			return -1;		
+		if(na - nb <= eps * 3 * ordEps)
+			break;		
+		if(y == na || y == nb)
+			return -1;
+		sum += eps / 6.0 * (res + 4.0 * res_05 + pres);
+		ty = py;
+		py = y;
+		y = ty + ((na + nb) / 2 - ty) * 1.3;
 		x += eps;
 	}
 	return sum;

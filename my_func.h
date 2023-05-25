@@ -99,9 +99,9 @@ float df2_3(float x);
  * @param f Указатель на функцию
  * @param xl левая граница интервала
  * @param xr правая граница интервала
- * @return float Возвращает 1, если корни есть, иначе NAN
+ * @return unsigned char Возвращает 1, если корни есть, иначе 0
  */
-float rootPresent(float (*f)(float), float xl, float xr);
+unsigned char rootPresent(float (*f)(float), float xl, float xr);
 // Функция нахождения корня по методу "Линейный поиск"
 /**
  * @brief Функция нахождения корня по методу "Линейный поиск"
@@ -110,9 +110,10 @@ float rootPresent(float (*f)(float), float xl, float xr);
  * @param xl левая граница интервала
  * @param xr правая граница интервала
  * @param eps точность
+ * @param (unsigned int *) указатель на кол-во сделанных шагов
  * @return float Возвращает значение корня, либо NAN если его нет
  */
-float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps);
+float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps, unsigned int *step);
 /**
  * @brief Функция нахождения корня по методу "Деление отрезка пополам"
  * 
@@ -122,7 +123,7 @@ float rootFindLineSearch(float (*f)(float), float xl, float xr, float eps);
  * @param eps точность
  * @return float Возвращает значение корня, либо NAN если его нет
  */
-float rootFindDiv2(float (*f)(float), float xl, float xr, float eps);
+float rootFindDiv2(float (*f)(float), float xl, float xr, float eps, unsigned int *step);
 /**
  * @brief Функция нахождения корня по методу "Хорды"
  * 
@@ -132,7 +133,7 @@ float rootFindDiv2(float (*f)(float), float xl, float xr, float eps);
  * @param eps точность
  * @return float Возвращает значение корня, либо NAN если его нет
  */
-float rootFindChord(float (*f)(float), float xl, float xr, float eps);
+float rootFindChord(float (*f)(float), float xl, float xr, float eps, unsigned int *step);
 /**
  * @brief Поиск и вывод на экран всех корней на заданном интервале
  * 
@@ -144,30 +145,22 @@ float rootFindChord(float (*f)(float), float xl, float xr, float eps);
  * @param minx указатель на минимальный найденный корень
  * @param maxx указатель на максимальный найденный корень
  */
-void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float), float xl, float xr, float eps, float *minx, float *maxx);
+void findAllRoot(float (*f)(float), float (*fM)(float (*f)(float), float, float, float, unsigned int *), float xl, float xr, float eps, float *minx, float *maxx);
 /**
- * @brief Поиск ближайшей большей точки к y 
- * @param y Заданная точка y
+ * @brief Возвращает расстояние между точкой y и ближайшими к ней, при условии,
+ * что она не является крайней. Если она является крайней, функция возвращает 0.
+ * 
+ * @param y 
  * @param y1 
  * @param y2 
- * @param y3 
- * @return float Результат поиска
+ * @param y3
+ * @param na указатель на переменную, в которую фукнкция положит ближайшую сверху точку
+ * @param nb указатель на переменную, в которую фукнкция положит ближайшую снизу точку
+ * @return float 
  */
-float nearestAbove(float y, float y1, float y2, float y3);
+float getBetween(float y, float y1, float y2, float y3, float *na, float *nb);
 /**
- * @brief Поиск ближайшей меньшей точки к y 
- * @param y Заданная точка y
- * @param y1 
- * @param y2 
- * @param y3 
- * @return float Результат поиска
- */
-float nearestBelow(float y, float y1, float y2, float y3);
-/**
- * @brief Поиск площади фигуры ограниченной тремя функциями
- * @param f_1 указатель на 1 функцию
- * @param f_2 указатель на 2 функцию
- * @param f_3 указатель на 3 функцию
+ * @brief Поиск площади фигуры ограниченной тремя функциями методом прямоугольников
  * @param xl левая граница поиска
  * @param xr правая граница поиска
  * @param eps шаг интегрирования
@@ -175,8 +168,27 @@ float nearestBelow(float y, float y1, float y2, float y3);
  * @param sY точка по оси Y внутри площади искомой фигуры
  * @return float Результат рассчета площади
  */
-float calcIntegralSquare(float (*f_1)(float), float (*f_2)(float), float (*f_3)(float), float xl, float xr, float eps, float sX, float sY);
-
+float calcIntegralSquare(float xl, float xr, float eps, float sX, float sY);
+/**
+ * @brief Поиск площади фигуры ограниченной тремя функциями методом трапеций
+ * @param xl левая граница поиска
+ * @param xr правая граница поиска
+ * @param eps шаг интегрирования
+ * @param sX точка по оси Х внутри площади искомой фигуры
+ * @param sY точка по оси Y внутри площади искомой фигуры
+ * @return float Результат рассчета площади
+ */
+float calcIntegralTrap(float xl, float xr, float eps, float sX, float sY);
+/**
+ * @brief Поиск площади фигуры ограниченной тремя функциями методом Симпсона
+ * @param xl левая граница поиска
+ * @param xr правая граница поиска
+ * @param eps шаг интегрирования
+ * @param sX точка по оси Х внутри площади искомой фигуры
+ * @param sY точка по оси Y внутри площади искомой фигуры
+ * @return float Результат рассчета площади
+ */
+float calcIntegralSimpson(float xl, float xr, float eps, float sX, float sY);
 
 #ifdef __cplusplus
 }
